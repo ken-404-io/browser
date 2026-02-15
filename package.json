@@ -5,10 +5,10 @@
   "main": "dist/main/main.js",
   "scripts": {
     "copy-assets": "node -e \"const fs=require('fs'),p=require('path');const d=p.join('dist','renderer');fs.mkdirSync(d,{recursive:true});fs.copyFileSync(p.join('src','renderer','index.html'),p.join(d,'index.html'));fs.copyFileSync(p.join('src','renderer','styles.css'),p.join(d,'styles.css'));\"",
-    "build": "tsc && npm run copy-assets",
+    "build": "tsc -b tsconfig.main.json tsconfig.preload.json tsconfig.renderer.json && npm run copy-assets",
     "start": "npm run build && electron .",
-    "dev": "tsc && npm run copy-assets && electron .",
-    "clean": "node -e \"fs=require('fs');fs.rmSync('dist',{recursive:true,force:true})\""
+    "dev": "npm run build && electron .",
+    "clean": "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});['tsconfig.main.tsbuildinfo','tsconfig.preload.tsbuildinfo','tsconfig.renderer.tsbuildinfo'].forEach(f=>{try{fs.unlinkSync(f)}catch(e){}});\""
   },
   "repository": {
     "type": "git",

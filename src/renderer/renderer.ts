@@ -324,24 +324,24 @@ function attachWebviewEvents(webview: Electron.WebviewTag, tabId: string): void 
     updateTabLoading(tabId, false);
   });
 
-  webview.addEventListener("page-title-updated", (e) => {
-    const title = (e as any).title;
-    updateTabTitle(tabId, title);
+  webview.addEventListener("page-title-updated", (e: Event) => {
+    const wvEvent = e as WebviewEvent;
+    updateTabTitle(tabId, wvEvent.title);
     const tab = tabs.get(tabId);
     if (tab) {
-      window.browserAPI.history.add(tab.url, title);
+      window.browserAPI.history.add(tab.url, wvEvent.title);
       saveCurrentSession();
     }
   });
 
-  webview.addEventListener("page-favicon-updated", (e) => {
-    updateTabFavicon(tabId, (e as any).favicons);
+  webview.addEventListener("page-favicon-updated", (e: Event) => {
+    updateTabFavicon(tabId, (e as WebviewEvent).favicons);
   });
 
-  webview.addEventListener("did-navigate", (e) => {
+  webview.addEventListener("did-navigate", (e: Event) => {
     const tab = tabs.get(tabId);
     if (!tab || !tab.webview) return;
-    tab.url = (e as any).url;
+    tab.url = (e as WebviewEvent).url;
     tab.canGoBack = tab.webview.canGoBack();
     tab.canGoForward = tab.webview.canGoForward();
 
@@ -354,10 +354,10 @@ function attachWebviewEvents(webview: Electron.WebviewTag, tabId: string): void 
     }
   });
 
-  webview.addEventListener("did-navigate-in-page", (e) => {
+  webview.addEventListener("did-navigate-in-page", (e: Event) => {
     const tab = tabs.get(tabId);
     if (!tab || !tab.webview) return;
-    tab.url = (e as any).url;
+    tab.url = (e as WebviewEvent).url;
     tab.canGoBack = tab.webview.canGoBack();
     tab.canGoForward = tab.webview.canGoForward();
 
@@ -368,8 +368,8 @@ function attachWebviewEvents(webview: Electron.WebviewTag, tabId: string): void 
     }
   });
 
-  webview.addEventListener("new-window", (e) => {
-    createTab((e as any).url);
+  webview.addEventListener("new-window", (e: Event) => {
+    createTab((e as WebviewEvent).url);
   });
 }
 
