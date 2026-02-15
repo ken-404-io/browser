@@ -96,7 +96,9 @@ const ntpSearchInput = document.getElementById("ntp-search-input") as HTMLInputE
 const btnBack = document.getElementById("btn-back") as HTMLButtonElement;
 const btnForward = document.getElementById("btn-forward") as HTMLButtonElement;
 const btnReload = document.getElementById("btn-reload") as HTMLButtonElement;
-const securityIcon = document.getElementById("security-icon")!;
+const omniboxIcon = document.getElementById("omnibox-icon")!;
+const iconSearch = document.getElementById("icon-search")! as unknown as SVGElement;
+const iconLock = document.getElementById("icon-lock")! as unknown as SVGElement;
 const btnBookmark = document.getElementById("btn-bookmark")!;
 const bookmarksBar = document.getElementById("bookmarks-bar")!;
 const findBar = document.getElementById("find-bar")!;
@@ -375,9 +377,11 @@ function attachWebviewEvents(webview: Electron.WebviewTag, tabId: string): void 
 
 function updateSecurityIcon(url: string): void {
   if (url.startsWith("https://")) {
-    securityIcon.classList.add("secure");
+    iconSearch.style.display = "none";
+    iconLock.style.display = "block";
   } else {
-    securityIcon.classList.remove("secure");
+    iconSearch.style.display = "block";
+    iconLock.style.display = "none";
   }
 }
 
@@ -793,7 +797,7 @@ document.querySelectorAll("#context-menu .menu-item").forEach((item) => {
 
 // Menu button (hamburger) — opens context menu
 document.getElementById("btn-menu")!.addEventListener("click", (e) => {
-  const rect = (e.target as HTMLElement).closest(".nav-btn")!.getBoundingClientRect();
+  const rect = (e.target as HTMLElement).closest(".toolbar-btn")!.getBoundingClientRect();
   showContextMenu(rect.right - 220, rect.bottom + 4);
 });
 
