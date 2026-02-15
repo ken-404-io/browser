@@ -85,6 +85,7 @@ interface Tab {
 
 const tabs: Map<string, Tab> = new Map();
 let activeTabId: string | null = null;
+let draggedTabId: string | null = null;
 
 // --- DOM references ---
 
@@ -177,6 +178,65 @@ function createTab(url?: string): void {
   tabEl.querySelector(".tab-close")!.addEventListener("click", (e) => {
     e.stopPropagation();
     closeTab(id);
+  });
+
+  // --- Drag and Drop ---
+  tabEl.draggable = true;
+
+  tabEl.addEventListener("dragstart", (e) => {
+    draggedTabId = id;
+    tabEl.classList.add("dragging");
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", id);
+    }
+  });
+
+  tabEl.addEventListener("dragend", () => {
+    draggedTabId = null;
+    tabEl.classList.remove("dragging");
+    tabsContainer.querySelectorAll(".tab").forEach((el) => {
+      el.classList.remove("drag-over-left", "drag-over-right");
+    });
+  });
+
+  tabEl.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    if (!draggedTabId || draggedTabId === id) return;
+    if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+    const rect = tabEl.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+
+    tabEl.classList.remove("drag-over-left", "drag-over-right");
+    if (e.clientX < midX) {
+      tabEl.classList.add("drag-over-left");
+    } else {
+      tabEl.classList.add("drag-over-right");
+    }
+  });
+
+  tabEl.addEventListener("dragleave", () => {
+    tabEl.classList.remove("drag-over-left", "drag-over-right");
+  });
+
+  tabEl.addEventListener("drop", (e) => {
+    e.preventDefault();
+    if (!draggedTabId || draggedTabId === id) return;
+
+    const draggedEl = tabsContainer.querySelector(`[data-tab-id="${draggedTabId}"]`);
+    if (!draggedEl) return;
+
+    const rect = tabEl.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+
+    if (e.clientX < midX) {
+      tabsContainer.insertBefore(draggedEl, tabEl);
+    } else {
+      tabsContainer.insertBefore(draggedEl, tabEl.nextSibling);
+    }
+
+    tabEl.classList.remove("drag-over-left", "drag-over-right");
   });
 
   tabsContainer.appendChild(tabEl);
