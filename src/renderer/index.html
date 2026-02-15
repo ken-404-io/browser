@@ -62,6 +62,12 @@
 
     <!-- Chrome-style profile + menu -->
     <div id="toolbar-separator"></div>
+
+    <!-- Profile button -->
+    <button id="btn-profile" class="toolbar-btn" title="Profile">
+      <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M3.5 17.5c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    </button>
+
     <button id="btn-settings" class="toolbar-btn" title="Settings">
       <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M10 2v2.5M10 15.5V18M2 10h2.5M15.5 10H18M4.2 4.2l1.8 1.8M14 14l1.8 1.8M4.2 15.8l1.8-1.8M14 6l1.8-1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     </button>
@@ -139,6 +145,21 @@
         </a>
       </div>
     </div>
+
+    <!-- SERP Results (shown when search is active) -->
+    <div id="serp-container">
+      <div id="serp-header">
+        <span id="serp-query"></span>
+        <div id="serp-tabs">
+          <button class="serp-tab active" data-serp-tab="all">All</button>
+          <button class="serp-tab" data-serp-tab="related">Related</button>
+        </div>
+      </div>
+      <div id="serp-results"></div>
+      <div id="serp-footer">
+        <button id="serp-view-full">View full results on search engine</button>
+      </div>
+    </div>
   </div>
 
   <!-- Downloads panel -->
@@ -191,6 +212,87 @@
       </div>
       <div class="settings-group">
         <label class="settings-label"><input type="checkbox" id="setting-restore-session" class="settings-checkbox"> Restore previous session on startup</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile panel -->
+  <div id="profile-panel" class="side-panel">
+    <div class="panel-header">
+      <h3>Profiles</h3>
+      <button id="profile-panel-close" class="panel-close-btn">
+        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="profile-content">
+      <!-- Auth status -->
+      <div id="auth-status">
+        <div id="auth-logged-out">
+          <p class="auth-message">Sign in to sync your data across devices</p>
+          <button id="auth-show-login" class="auth-btn auth-btn-primary">Sign In</button>
+          <button id="auth-show-register" class="auth-btn">Create Account</button>
+        </div>
+        <div id="auth-logged-in" style="display:none">
+          <div id="auth-user-info">
+            <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="11" r="5.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5.5 28c0-5.8 4.7-10.5 10.5-10.5S26.5 22.2 26.5 28" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+            <span id="auth-email-display"></span>
+          </div>
+          <button id="auth-logout-btn" class="auth-btn">Sign Out</button>
+        </div>
+      </div>
+
+      <!-- Auth forms -->
+      <div id="auth-form-container" style="display:none">
+        <h4 id="auth-form-title">Sign In</h4>
+        <div id="auth-error" class="auth-error"></div>
+        <input id="auth-email" type="email" placeholder="Email" class="auth-input" autocomplete="off">
+        <input id="auth-password" type="password" placeholder="Password" class="auth-input" autocomplete="off">
+        <input id="auth-password-confirm" type="password" placeholder="Confirm Password" class="auth-input" style="display:none" autocomplete="off">
+        <button id="auth-submit" class="auth-btn auth-btn-primary">Sign In</button>
+        <div id="auth-sso-divider"><span>or continue with</span></div>
+        <div id="auth-sso-buttons"></div>
+        <button id="auth-form-cancel" class="auth-btn">Cancel</button>
+      </div>
+
+      <!-- Separator -->
+      <div class="profile-separator"></div>
+
+      <!-- Active profile -->
+      <div id="active-profile-section">
+        <h4>Active Profile</h4>
+        <div id="active-profile-display"></div>
+      </div>
+
+      <!-- Profile list -->
+      <div id="profile-list-section">
+        <h4>Switch Profile</h4>
+        <div id="profile-list"></div>
+      </div>
+
+      <!-- Create profile -->
+      <div id="create-profile-section">
+        <button id="btn-create-profile" class="auth-btn auth-btn-primary">New Profile</button>
+        <div id="create-profile-form" style="display:none">
+          <input id="new-profile-name" type="text" placeholder="Profile name" class="auth-input" autocomplete="off">
+          <div id="avatar-picker">
+            <button class="avatar-option selected" data-avatar="person">
+              <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M3.5 17.5c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+            </button>
+            <button class="avatar-option" data-avatar="star">
+              <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2l2.5 5 5.5.8-4 3.9 1 5.4L10 14.3 4.9 17.1l1-5.4-4-3.9 5.5-.8z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+            </button>
+            <button class="avatar-option" data-avatar="heart">
+              <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 17s-7-4.4-7-8.5C3 5.4 5.4 3 8 3c1.5 0 2 .8 2 .8S10.5 3 12 3c2.6 0 5 2.4 5 5.5 0 4.1-7 8.5-7 8.5z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+            </button>
+            <button class="avatar-option" data-avatar="bolt">
+              <svg width="20" height="20" viewBox="0 0 20 20"><path d="M11 2L5 11h5l-1 7 6-9h-5l1-7z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+            </button>
+          </div>
+          <div class="profile-form-actions">
+            <button id="create-profile-submit" class="auth-btn auth-btn-primary">Create</button>
+            <button id="create-profile-cancel" class="auth-btn">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

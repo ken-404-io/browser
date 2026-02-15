@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, session, Menu, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, session, Menu, net } from "electron";
 import * as path from "path";
 import {
   getBookmarks, addBookmark, removeBookmark, isBookmarked,
@@ -6,6 +6,8 @@ import {
   getSettings, updateSettings,
   saveSession, getSession,
   getDownloads, saveDownload, clearDownloads,
+  getProfiles, createProfile, deleteProfile, switchProfile, getActiveProfile,
+  getAuthState, registerUser, loginUser, logoutUser, getSSOProviders,
   type DownloadItem, type Settings,
 } from "./storage";
 
@@ -93,6 +95,32 @@ ipcMain.on("session:save", (_e, tabs: Array<{ url: string; title: string }>) => 
 // --- Downloads IPC ---
 ipcMain.handle("downloads:getAll", () => getDownloads());
 ipcMain.handle("downloads:clear", () => clearDownloads());
+
+// --- Profiles IPC ---
+ipcMain.handle("profiles:getAll", () => getProfiles());
+ipcMain.handle("profiles:getActive", () => getActiveProfile());
+ipcMain.handle("profiles:create", (_e, name: string, avatar: string) => createProfile(name, avatar));
+ipcMain.handle("profiles:delete", (_e, id: string) => deleteProfile(id));
+ipcMain.handle("profiles:switch", (_e, id: string) => switchProfile(id));
+
+// --- Auth IPC ---
+ipcMain.handle("auth:getState", () => getAuthState());
+ipcMain.handle("auth:register", (_e, email: string, password: string) => registerUser(email, password));
+ipcMain.handle("auth:login", (_e, email: string, password: string) => loginUser(email, password));
+ipcMain.handle("auth:logout", () => logoutUser());
+ipcMain.handle("auth:getSSOProviders", () => getSSOProviders());
+
+// --- SERP (Search Engine Results) IPC ---
+ipcMain.handle("search:query", async (_e, query: string): Promise<unknown> => {
+  try {
+    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
+    const response = await net.fetch(url);
+    const data = await response.json();
+    return data;
+  } catch {
+    return null;
+  }
+});
 
 // Track active downloads for progress updates
 const activeDownloads = new Map<string, Electron.DownloadItem>();
