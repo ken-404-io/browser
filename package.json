@@ -1,7 +1,7 @@
 {
-  "name": "browser",
+  "name": "orbital",
   "version": "1.0.0",
-  "description": "A fast, modular Chromium-based browser built with TypeScript and Electron",
+  "description": "Orbital - A fast, modular Chromium-based browser built with TypeScript and Electron",
   "main": "dist/main/main.js",
   "scripts": {
     "copy-assets": "node -e \"const fs=require('fs'),p=require('path');const d=p.join('dist','renderer');fs.mkdirSync(d,{recursive:true});fs.copyFileSync(p.join('src','renderer','index.html'),p.join(d,'index.html'));fs.copyFileSync(p.join('src','renderer','styles.css'),p.join(d,'styles.css'));\"",
@@ -14,7 +14,7 @@
     "type": "git",
     "url": "git+https://github.com/ken-404-io/browser.git"
   },
-  "keywords": ["browser", "electron", "typescript"],
+  "keywords": ["orbital", "browser", "electron", "typescript"],
   "author": "",
   "license": "ISC",
   "bugs": {
