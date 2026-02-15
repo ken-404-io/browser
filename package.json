@@ -8,13 +8,43 @@
     "build": "tsc -b tsconfig.main.json tsconfig.preload.json tsconfig.renderer.json && npm run copy-assets",
     "start": "npm run build && electron .",
     "dev": "npm run build && electron .",
-    "clean": "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});['tsconfig.main.tsbuildinfo','tsconfig.preload.tsbuildinfo','tsconfig.renderer.tsbuildinfo'].forEach(f=>{try{fs.unlinkSync(f)}catch(e){}});\""
+    "clean": "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});['tsconfig.main.tsbuildinfo','tsconfig.preload.tsbuildinfo','tsconfig.renderer.tsbuildinfo'].forEach(f=>{try{fs.unlinkSync(f)}catch(e){}});\"",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:linux": "npm run build && electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.orbital.browser",
+    "productName": "Orbital",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"]
+    }
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ken-404-io/browser.git"
   },
-  "keywords": ["orbital", "browser", "electron", "typescript"],
+  "keywords": [
+    "orbital",
+    "browser",
+    "electron",
+    "typescript"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -24,6 +54,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "electron": "^40.4.1",
+    "electron-builder": "^26.7.0",
     "typescript": "^5.9.3"
   }
 }
