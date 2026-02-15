@@ -148,6 +148,19 @@ button:disabled:hover { background: none; }
 .tab:hover .tab-close, .tab.active .tab-close { opacity: 1; }
 .tab-close:hover { background: rgba(255, 255, 255, 0.12); }
 
+/* Drag and drop states */
+.tab.dragging {
+  opacity: 0.4;
+}
+
+.tab.drag-over-left {
+  box-shadow: inset 3px 0 0 var(--chrome-blue);
+}
+
+.tab.drag-over-right {
+  box-shadow: inset -3px 0 0 var(--chrome-blue);
+}
+
 .tab-loading {
   width: 16px;
   height: 16px;
