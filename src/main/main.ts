@@ -58,7 +58,6 @@ ipcMain.handle("nav:resolveUrl", (_event, input: string): string => {
     return `https://${trimmed}`;
   }
   const searchUrls: Record<Settings["searchEngine"], string> = {
-    google: "https://www.google.com/search?q=",
     duckduckgo: "https://duckduckgo.com/?q=",
     bing: "https://www.bing.com/search?q=",
   };
