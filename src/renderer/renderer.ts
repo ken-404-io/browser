@@ -519,6 +519,7 @@ function updateSecurityIcon(url: string): void {
 async function showSERP(query: string): Promise<void> {
   ntpContent.style.display = "none";
   serpContainer.classList.add("visible");
+  newTabPage.classList.add("serp-active");
   serpQuery.textContent = query;
   serpResults.innerHTML = '<div class="serp-loading">Searching...</div>';
 
@@ -588,6 +589,7 @@ async function showSERP(query: string): Promise<void> {
 
 function hideSERP(): void {
   serpContainer.classList.remove("visible");
+  newTabPage.classList.remove("serp-active");
   ntpContent.style.display = "";
   serpResults.innerHTML = "";
 }
