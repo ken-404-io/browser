@@ -1024,14 +1024,28 @@ btnReload.addEventListener("click", () => {
   }
 });
 
-// URL bar
+// URL bar — show SERP for search queries, navigate for URLs
 urlBar.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     const value = urlBar.value.trim();
-    if (value) {
+    if (!value) return;
+
+    const isUrl = /^https?:\/\//i.test(value) || /^[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+/.test(value);
+
+    if (isUrl) {
       navigateTo(value);
-      urlBar.blur();
+    } else {
+      // Search query — show SERP like the NTP search bar
+      const tab = getActiveTab();
+      if (tab) {
+        if (tab.webview) {
+          tab.webview.classList.remove("active");
+        }
+        newTabPage.classList.add("visible");
+        showSERP(value);
+      }
     }
+    urlBar.blur();
   }
 });
 
