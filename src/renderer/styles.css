@@ -389,9 +389,11 @@ button:disabled:hover { background: none; }
   display: none;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 12vh;
+  padding-top: 10vh;
   background: var(--chrome-bg);
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(138, 180, 248, 0.06) 0%, transparent 60%);
   overflow-y: auto;
+  z-index: 5;
 }
 #new-tab-page.visible { display: flex; }
 
