@@ -96,13 +96,13 @@ export function searchHistory(query: string): HistoryEntry[] {
 // --- Settings ---
 
 export interface Settings {
-  searchEngine: "google" | "duckduckgo" | "bing";
+  searchEngine: "duckduckgo" | "bing";
   adBlockEnabled: boolean;
   restoreSession: boolean;
 }
 
 const defaultSettings: Settings = {
-  searchEngine: "google",
+  searchEngine: "duckduckgo",
   adBlockEnabled: true,
   restoreSession: true,
 };

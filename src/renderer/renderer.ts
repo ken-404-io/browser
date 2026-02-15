@@ -12,7 +12,7 @@ interface HistoryData {
 }
 
 interface SettingsData {
-  searchEngine: "google" | "duckduckgo" | "bing";
+  searchEngine: "duckduckgo" | "bing";
   adBlockEnabled: boolean;
   restoreSession: boolean;
 }
