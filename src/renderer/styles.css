@@ -389,8 +389,9 @@ button:disabled:hover { background: none; }
   display: none;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 15vh;
+  padding-top: 12vh;
   background: var(--chrome-bg);
+  overflow-y: auto;
 }
 #new-tab-page.visible { display: flex; }
 
@@ -398,13 +399,13 @@ button:disabled:hover { background: none; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 32px;
+  gap: 36px;
   width: 100%;
-  max-width: 584px;
+  max-width: 652px;
   padding: 0 24px;
 }
 
-#ntp-logo-wrap { margin-bottom: 8px; }
+#ntp-logo-wrap { margin-bottom: 4px; }
 
 #ntp-search {
   width: 100%;
@@ -437,9 +438,10 @@ button:disabled:hover { background: none; }
 #ntp-search-input::placeholder { color: var(--chrome-text-muted); }
 
 #ntp-shortcuts {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
   width: 100%;
 }
 
@@ -447,13 +449,15 @@ button:disabled:hover { background: none; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 16px 8px 12px;
+  gap: 8px;
+  padding: 12px 4px 10px;
   border-radius: 12px;
   cursor: pointer;
   transition: background var(--transition);
   text-decoration: none;
   color: var(--chrome-text-secondary);
+  width: 92px;
+  flex-shrink: 0;
 }
 .shortcut:hover { background: rgba(255, 255, 255, 0.06); }
 
@@ -464,16 +468,16 @@ button:disabled:hover { background: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .shortcut span {
-  font-size: 12px;
+  font-size: 11px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100px;
+  max-width: 80px;
   text-align: center;
 }
 
@@ -1026,7 +1030,9 @@ button:disabled:hover { background: none; }
    Responsive
    ============================================ */
 @media (max-width: 700px) {
-  #ntp-shortcuts { grid-template-columns: repeat(4, 1fr); }
+  #ntp-shortcuts { gap: 2px; }
+  .shortcut { width: 72px; padding: 10px 2px 8px; }
+  .shortcut-icon { width: 40px; height: 40px; }
   .side-panel { width: 100%; right: -100%; }
   #serp-container { max-width: 100%; }
 }
