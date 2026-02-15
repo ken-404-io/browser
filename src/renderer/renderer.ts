@@ -28,6 +28,47 @@ interface DownloadData {
   startedAt: number;
 }
 
+interface ProfileData {
+  id: string;
+  name: string;
+  avatar: string;
+  createdAt: number;
+  isDefault: boolean;
+}
+
+interface AuthStateData {
+  isLoggedIn: boolean;
+  email: string | null;
+  token: string | null;
+  profileId: string | null;
+}
+
+interface SSOProvider {
+  id: string;
+  name: string;
+  authUrl: string;
+}
+
+// DuckDuckGo Instant Answer API types
+interface DDGResult {
+  Abstract: string;
+  AbstractText: string;
+  AbstractSource: string;
+  AbstractURL: string;
+  Heading: string;
+  Answer: string;
+  AnswerType: string;
+  Definition: string;
+  DefinitionSource: string;
+  DefinitionURL: string;
+  RelatedTopics: Array<{
+    Text?: string;
+    FirstURL?: string;
+    Result?: string;
+  }>;
+  Redirect: string;
+}
+
 declare global {
   interface Window {
     browserAPI: {
@@ -67,6 +108,23 @@ declare global {
         toggle: () => void;
         onToggleWebview: (cb: () => void) => void;
       };
+      profiles: {
+        getAll: () => Promise<ProfileData[]>;
+        getActive: () => Promise<ProfileData>;
+        create: (name: string, avatar: string) => Promise<ProfileData>;
+        delete: (id: string) => Promise<ProfileData[]>;
+        switch: (id: string) => Promise<ProfileData | null>;
+      };
+      auth: {
+        getState: () => Promise<AuthStateData>;
+        register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+        login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+        logout: () => Promise<void>;
+        getSSOProviders: () => Promise<SSOProvider[]>;
+      };
+      search: {
+        query: (q: string) => Promise<DDGResult | null>;
+      };
     };
   }
 }
@@ -86,6 +144,8 @@ interface Tab {
 const tabs: Map<string, Tab> = new Map();
 let activeTabId: string | null = null;
 let draggedTabId: string | null = null;
+let authMode: "login" | "register" = "login";
+let serpFullUrl: string = "";
 
 // --- DOM references ---
 
@@ -113,6 +173,13 @@ const historyPanel = document.getElementById("history-panel")!;
 const historyList = document.getElementById("history-list")!;
 const historySearch = document.getElementById("history-search") as HTMLInputElement;
 const settingsPanel = document.getElementById("settings-panel")!;
+const profilePanel = document.getElementById("profile-panel")!;
+
+// SERP elements
+const ntpContent = document.getElementById("ntp-content")!;
+const serpContainer = document.getElementById("serp-container")!;
+const serpQuery = document.getElementById("serp-query")!;
+const serpResults = document.getElementById("serp-results")!;
 
 // --- Utility ---
 
@@ -272,6 +339,7 @@ function switchTab(id: string): void {
 
   if (showNtp) {
     urlBar.value = "";
+    hideSERP();
   }
 
   closeFindBar();
@@ -368,6 +436,7 @@ async function navigateTo(input: string): Promise<void> {
     webviewContainer.appendChild(webview);
     tab.webview = webview;
     newTabPage.classList.remove("visible");
+    hideSERP();
   } else {
     tab.webview.loadURL(url);
   }
@@ -443,6 +512,84 @@ function updateSecurityIcon(url: string): void {
     iconSearch.style.display = "block";
     iconLock.style.display = "none";
   }
+}
+
+// --- SERP (Search Engine Results Page) ---
+
+async function showSERP(query: string): Promise<void> {
+  ntpContent.style.display = "none";
+  serpContainer.classList.add("visible");
+  serpQuery.textContent = query;
+  serpResults.innerHTML = '<div class="serp-loading">Searching...</div>';
+
+  const settings = await window.browserAPI.settings.get();
+  const searchUrls: Record<string, string> = {
+    duckduckgo: "https://duckduckgo.com/?q=",
+    bing: "https://www.bing.com/search?q=",
+  };
+  serpFullUrl = `${searchUrls[settings.searchEngine]}${encodeURIComponent(query)}`;
+
+  const data = await window.browserAPI.search.query(query);
+
+  serpResults.innerHTML = "";
+
+  if (!data) {
+    serpResults.innerHTML = '<div class="serp-loading">Could not load results. Click below for full results.</div>';
+    return;
+  }
+
+  // Instant answer
+  if (data.AbstractText || data.Answer || data.Definition) {
+    const answerEl = document.createElement("div");
+    answerEl.className = "serp-instant-answer";
+    const heading = data.Heading || "Answer";
+    const text = data.AbstractText || data.Answer || data.Definition;
+    const source = data.AbstractSource || data.DefinitionSource || "";
+    const sourceUrl = data.AbstractURL || data.DefinitionURL || "";
+    answerEl.innerHTML = `
+      <h3>${escapeHtml(heading)}</h3>
+      <p>${escapeHtml(text)}</p>
+      ${sourceUrl ? `<a>${escapeHtml(source)}</a>` : ""}
+    `;
+    if (sourceUrl) {
+      answerEl.querySelector("a")?.addEventListener("click", () => navigateTo(sourceUrl));
+    }
+    serpResults.appendChild(answerEl);
+  }
+
+  // Related topics
+  if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+    for (const topic of data.RelatedTopics.slice(0, 8)) {
+      if (!topic.Text || !topic.FirstURL) continue;
+      const resultEl = document.createElement("div");
+      resultEl.className = "serp-result";
+      const titleMatch = topic.Text.split(" - ");
+      const title = titleMatch[0] || topic.Text;
+      const snippet = titleMatch.slice(1).join(" - ") || "";
+      resultEl.innerHTML = `
+        <span class="serp-result-url">${escapeHtml(topic.FirstURL)}</span>
+        <span class="serp-result-title">${escapeHtml(title)}</span>
+        ${snippet ? `<span class="serp-result-snippet">${escapeHtml(snippet)}</span>` : ""}
+      `;
+      resultEl.addEventListener("click", () => navigateTo(topic.FirstURL!));
+      serpResults.appendChild(resultEl);
+    }
+  }
+
+  if (serpResults.children.length === 0) {
+    serpResults.innerHTML = '<div class="serp-loading">No instant results. Click below for full results.</div>';
+  }
+
+  // Handle redirect (e.g., DDG bang commands)
+  if (data.Redirect) {
+    navigateTo(data.Redirect);
+  }
+}
+
+function hideSERP(): void {
+  serpContainer.classList.remove("visible");
+  ntpContent.style.display = "";
+  serpResults.innerHTML = "";
 }
 
 // --- Bookmarks ---
@@ -567,7 +714,6 @@ function updateDownloadInPanel(dl: DownloadData): void {
     existing.replaceWith(newEl);
   } else {
     downloadsList.prepend(newEl);
-    // Remove "No downloads" message if present
     const empty = downloadsList.querySelector(".panel-empty");
     empty?.remove();
   }
@@ -580,6 +726,179 @@ async function loadSettings(): Promise<void> {
   (document.getElementById("setting-search-engine") as HTMLSelectElement).value = settings.searchEngine;
   (document.getElementById("setting-adblock") as HTMLInputElement).checked = settings.adBlockEnabled;
   (document.getElementById("setting-restore-session") as HTMLInputElement).checked = settings.restoreSession;
+}
+
+// --- Profile System ---
+
+async function renderProfilePanel(): Promise<void> {
+  // Auth state
+  const authState = await window.browserAPI.auth.getState();
+  const loggedOut = document.getElementById("auth-logged-out")!;
+  const loggedIn = document.getElementById("auth-logged-in")!;
+  const formContainer = document.getElementById("auth-form-container")!;
+
+  if (authState.isLoggedIn) {
+    loggedOut.style.display = "none";
+    loggedIn.style.display = "flex";
+    formContainer.style.display = "none";
+    document.getElementById("auth-email-display")!.textContent = authState.email || "";
+  } else {
+    loggedOut.style.display = "flex";
+    loggedIn.style.display = "none";
+  }
+
+  // Active profile
+  const activeProfile = await window.browserAPI.profiles.getActive();
+  const activeDisplay = document.getElementById("active-profile-display")!;
+  activeDisplay.innerHTML = `
+    <div class="profile-avatar">
+      ${getAvatarSVG(activeProfile.avatar)}
+    </div>
+    <div class="profile-info">
+      <span class="profile-name">${escapeHtml(activeProfile.name)}</span>
+      <span class="profile-meta">${activeProfile.isDefault ? "Default profile" : "Custom profile"}</span>
+    </div>
+  `;
+
+  // Profile list
+  const profiles = await window.browserAPI.profiles.getAll();
+  const profileList = document.getElementById("profile-list")!;
+  profileList.innerHTML = "";
+
+  for (const profile of profiles) {
+    if (profile.id === activeProfile.id) continue;
+    const item = document.createElement("div");
+    item.className = "profile-list-item";
+    item.innerHTML = `
+      <div class="profile-avatar">
+        ${getAvatarSVG(profile.avatar)}
+      </div>
+      <div class="profile-info">
+        <span class="profile-name">${escapeHtml(profile.name)}</span>
+        <span class="profile-meta">${profile.isDefault ? "Default" : "Custom"}</span>
+      </div>
+      ${!profile.isDefault ? `<button class="profile-delete-btn" title="Delete profile">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>` : ""}
+    `;
+
+    item.addEventListener("click", async (e) => {
+      if ((e.target as HTMLElement).closest(".profile-delete-btn")) {
+        await window.browserAPI.profiles.delete(profile.id);
+        await renderProfilePanel();
+        await renderBookmarksBar();
+        return;
+      }
+      await window.browserAPI.profiles.switch(profile.id);
+      await renderProfilePanel();
+      await renderBookmarksBar();
+    });
+
+    profileList.appendChild(item);
+  }
+
+  // SSO buttons
+  await renderSSOButtons();
+}
+
+function getAvatarSVG(avatar: string): string {
+  switch (avatar) {
+    case "star":
+      return '<svg width="18" height="18" viewBox="0 0 20 20"><path d="M10 2l2.5 5 5.5.8-4 3.9 1 5.4L10 14.3 4.9 17.1l1-5.4-4-3.9 5.5-.8z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>';
+    case "heart":
+      return '<svg width="18" height="18" viewBox="0 0 20 20"><path d="M10 17s-7-4.4-7-8.5C3 5.4 5.4 3 8 3c1.5 0 2 .8 2 .8S10.5 3 12 3c2.6 0 5 2.4 5 5.5 0 4.1-7 8.5-7 8.5z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>';
+    case "bolt":
+      return '<svg width="18" height="18" viewBox="0 0 20 20"><path d="M11 2L5 11h5l-1 7 6-9h-5l1-7z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>';
+    default: // person
+      return '<svg width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M3.5 17.5c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>';
+  }
+}
+
+async function renderSSOButtons(): Promise<void> {
+  const ssoContainer = document.getElementById("auth-sso-buttons")!;
+  const providers = await window.browserAPI.auth.getSSOProviders();
+  ssoContainer.innerHTML = "";
+  for (const provider of providers) {
+    const btn = document.createElement("button");
+    btn.className = "sso-btn";
+    btn.textContent = `Continue with ${provider.name}`;
+    btn.addEventListener("click", () => {
+      navigateTo(provider.authUrl);
+      closeAllPanels();
+    });
+    ssoContainer.appendChild(btn);
+  }
+}
+
+function showAuthForm(mode: "login" | "register"): void {
+  authMode = mode;
+  const formContainer = document.getElementById("auth-form-container")!;
+  const loggedOut = document.getElementById("auth-logged-out")!;
+  const title = document.getElementById("auth-form-title")!;
+  const submitBtn = document.getElementById("auth-submit")!;
+  const confirmField = document.getElementById("auth-password-confirm") as HTMLInputElement;
+  const errorEl = document.getElementById("auth-error")!;
+
+  loggedOut.style.display = "none";
+  formContainer.style.display = "flex";
+  errorEl.classList.remove("visible");
+  errorEl.textContent = "";
+
+  (document.getElementById("auth-email") as HTMLInputElement).value = "";
+  (document.getElementById("auth-password") as HTMLInputElement).value = "";
+  confirmField.value = "";
+
+  if (mode === "register") {
+    title.textContent = "Create Account";
+    submitBtn.textContent = "Create Account";
+    confirmField.style.display = "block";
+  } else {
+    title.textContent = "Sign In";
+    submitBtn.textContent = "Sign In";
+    confirmField.style.display = "none";
+  }
+}
+
+async function handleAuthSubmit(): Promise<void> {
+  const email = (document.getElementById("auth-email") as HTMLInputElement).value.trim();
+  const password = (document.getElementById("auth-password") as HTMLInputElement).value;
+  const errorEl = document.getElementById("auth-error")!;
+
+  if (!email || !password) {
+    errorEl.textContent = "Please fill in all fields";
+    errorEl.classList.add("visible");
+    return;
+  }
+
+  if (authMode === "register") {
+    const confirm = (document.getElementById("auth-password-confirm") as HTMLInputElement).value;
+    if (password !== confirm) {
+      errorEl.textContent = "Passwords do not match";
+      errorEl.classList.add("visible");
+      return;
+    }
+    if (password.length < 6) {
+      errorEl.textContent = "Password must be at least 6 characters";
+      errorEl.classList.add("visible");
+      return;
+    }
+    const result = await window.browserAPI.auth.register(email, password);
+    if (!result.success) {
+      errorEl.textContent = result.error || "Registration failed";
+      errorEl.classList.add("visible");
+      return;
+    }
+  } else {
+    const result = await window.browserAPI.auth.login(email, password);
+    if (!result.success) {
+      errorEl.textContent = result.error || "Login failed";
+      errorEl.classList.add("visible");
+      return;
+    }
+  }
+
+  errorEl.classList.remove("visible");
+  await renderProfilePanel();
 }
 
 // --- Find in Page ---
@@ -628,6 +947,7 @@ function closeAllPanels(): void {
   downloadsPanel.classList.remove("open");
   historyPanel.classList.remove("open");
   settingsPanel.classList.remove("open");
+  profilePanel.classList.remove("open");
   panelOverlay.classList.remove("visible");
 }
 
@@ -715,14 +1035,21 @@ urlBar.addEventListener("keydown", (e) => {
 
 urlBar.addEventListener("focus", () => urlBar.select());
 
-// NTP search
+// NTP search — show SERP first, then navigate to full search on click
 ntpSearchInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     const value = ntpSearchInput.value.trim();
     if (value) {
-      navigateTo(value);
+      showSERP(value);
       ntpSearchInput.value = "";
     }
+  }
+});
+
+// SERP: view full results button
+document.getElementById("serp-view-full")!.addEventListener("click", () => {
+  if (serpFullUrl) {
+    navigateTo(serpFullUrl);
   }
 });
 
@@ -777,6 +1104,65 @@ document.getElementById("setting-adblock")!.addEventListener("change", (e) => {
 });
 document.getElementById("setting-restore-session")!.addEventListener("change", (e) => {
   window.browserAPI.settings.update({ restoreSession: (e.target as HTMLInputElement).checked });
+});
+
+// Profile button + panel
+document.getElementById("btn-profile")!.addEventListener("click", () => {
+  renderProfilePanel();
+  openPanel(profilePanel);
+});
+document.getElementById("profile-panel-close")!.addEventListener("click", closeAllPanels);
+
+// Auth form events
+document.getElementById("auth-show-login")!.addEventListener("click", () => showAuthForm("login"));
+document.getElementById("auth-show-register")!.addEventListener("click", () => showAuthForm("register"));
+document.getElementById("auth-submit")!.addEventListener("click", () => handleAuthSubmit());
+document.getElementById("auth-form-cancel")!.addEventListener("click", () => renderProfilePanel());
+document.getElementById("auth-logout-btn")!.addEventListener("click", async () => {
+  await window.browserAPI.auth.logout();
+  await renderProfilePanel();
+});
+
+// Auth form enter key
+document.getElementById("auth-password")!.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && authMode === "login") handleAuthSubmit();
+});
+document.getElementById("auth-password-confirm")!.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") handleAuthSubmit();
+});
+
+// Profile creation
+document.getElementById("btn-create-profile")!.addEventListener("click", () => {
+  document.getElementById("btn-create-profile")!.style.display = "none";
+  document.getElementById("create-profile-form")!.style.display = "flex";
+});
+
+document.getElementById("create-profile-cancel")!.addEventListener("click", () => {
+  document.getElementById("btn-create-profile")!.style.display = "flex";
+  document.getElementById("create-profile-form")!.style.display = "none";
+});
+
+document.getElementById("create-profile-submit")!.addEventListener("click", async () => {
+  const nameInput = document.getElementById("new-profile-name") as HTMLInputElement;
+  const name = nameInput.value.trim();
+  if (!name) return;
+
+  const selectedAvatar = document.querySelector(".avatar-option.selected") as HTMLElement;
+  const avatar = selectedAvatar?.dataset.avatar || "person";
+
+  await window.browserAPI.profiles.create(name, avatar);
+  nameInput.value = "";
+  document.getElementById("btn-create-profile")!.style.display = "flex";
+  document.getElementById("create-profile-form")!.style.display = "none";
+  await renderProfilePanel();
+});
+
+// Avatar picker
+document.querySelectorAll(".avatar-option").forEach((opt) => {
+  opt.addEventListener("click", () => {
+    document.querySelectorAll(".avatar-option").forEach((o) => o.classList.remove("selected"));
+    opt.classList.add("selected");
+  });
 });
 
 // Panel overlay click to close
@@ -928,6 +1314,7 @@ document.addEventListener("keydown", (e) => {
     closeFindBar();
     closeAllPanels();
     hideContextMenu();
+    hideSERP();
   }
   // F12: DevTools
   if (e.key === "F12") {

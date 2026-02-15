@@ -52,4 +52,27 @@ contextBridge.exposeInMainWorld("browserAPI", {
     toggle: () => ipcRenderer.send("devtools:toggle"),
     onToggleWebview: (cb: () => void) => ipcRenderer.on("devtools:toggleWebview", () => cb()),
   },
+
+  // Profiles
+  profiles: {
+    getAll: () => ipcRenderer.invoke("profiles:getAll"),
+    getActive: () => ipcRenderer.invoke("profiles:getActive"),
+    create: (name: string, avatar: string) => ipcRenderer.invoke("profiles:create", name, avatar),
+    delete: (id: string) => ipcRenderer.invoke("profiles:delete", id),
+    switch: (id: string) => ipcRenderer.invoke("profiles:switch", id),
+  },
+
+  // Auth
+  auth: {
+    getState: () => ipcRenderer.invoke("auth:getState"),
+    register: (email: string, password: string) => ipcRenderer.invoke("auth:register", email, password),
+    login: (email: string, password: string) => ipcRenderer.invoke("auth:login", email, password),
+    logout: () => ipcRenderer.invoke("auth:logout"),
+    getSSOProviders: () => ipcRenderer.invoke("auth:getSSOProviders"),
+  },
+
+  // Search (SERP)
+  search: {
+    query: (q: string) => ipcRenderer.invoke("search:query", q),
+  },
 });
