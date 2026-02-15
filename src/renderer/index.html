@@ -50,10 +50,19 @@
         <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1L2 3.5V6.5C2 9.8 4.1 12.7 7 13.5C9.9 12.7 12 9.8 12 6.5V3.5L7 1Z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
       </div>
       <input id="url-bar" type="text" placeholder="Search or enter URL" spellcheck="false" autocomplete="off">
+      <button id="btn-bookmark" class="url-action-btn" title="Bookmark this page">
+        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1l1.8 3.6L13 5.3l-3 2.9.7 4.1L7 10.3 3.3 12.3l.7-4.1-3-2.9 4.2-.7L7 1z" stroke="currentColor" stroke-width="1.2" fill="none" class="star-path"/></svg>
+      </button>
     </div>
     <div id="nav-actions">
       <button id="btn-downloads" class="nav-btn" title="Downloads">
         <svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2v8M5 7l3 3 3-3M3 12h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      </button>
+      <button id="btn-history" class="nav-btn" title="History">
+        <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+      </button>
+      <button id="btn-settings" class="nav-btn" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
       <button id="btn-menu" class="nav-btn" title="Menu">
         <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="3" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="13" r="1.5" fill="currentColor"/></svg>
@@ -61,10 +70,28 @@
     </div>
   </div>
 
+  <!-- Bookmarks bar -->
+  <div id="bookmarks-bar"></div>
+
+  <!-- Find bar -->
+  <div id="find-bar">
+    <input id="find-input" type="text" placeholder="Find in page..." spellcheck="false" autocomplete="off">
+    <span id="find-matches">0/0</span>
+    <button id="find-prev" class="find-btn" title="Previous">
+      <svg width="12" height="12" viewBox="0 0 12 12"><path d="M9 8L6 5 3 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    </button>
+    <button id="find-next" class="find-btn" title="Next">
+      <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 4l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    </button>
+    <button id="find-close" class="find-btn" title="Close">
+      <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+
   <!-- Webview container -->
   <div id="webview-container"></div>
 
-  <!-- New tab page (shown when no URL is loaded) -->
+  <!-- New tab page -->
   <div id="new-tab-page">
     <div id="ntp-content">
       <h1 id="ntp-logo">Browser</h1>
@@ -101,6 +128,94 @@
       </div>
     </div>
   </div>
+
+  <!-- Downloads panel (slide-out) -->
+  <div id="downloads-panel" class="side-panel">
+    <div class="panel-header">
+      <h3>Downloads</h3>
+      <div class="panel-header-actions">
+        <button id="downloads-clear" class="panel-action-btn">Clear all</button>
+        <button id="downloads-panel-close" class="panel-close-btn">
+          <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="downloads-list" class="panel-list"></div>
+  </div>
+
+  <!-- History panel (slide-out) -->
+  <div id="history-panel" class="side-panel">
+    <div class="panel-header">
+      <h3>History</h3>
+      <div class="panel-header-actions">
+        <button id="history-clear" class="panel-action-btn">Clear all</button>
+        <button id="history-panel-close" class="panel-close-btn">
+          <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <input id="history-search" type="text" placeholder="Search history..." class="panel-search" spellcheck="false">
+    <div id="history-list" class="panel-list"></div>
+  </div>
+
+  <!-- Settings panel (slide-out) -->
+  <div id="settings-panel" class="side-panel">
+    <div class="panel-header">
+      <h3>Settings</h3>
+      <button id="settings-panel-close" class="panel-close-btn">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="settings-content">
+      <div class="settings-group">
+        <label class="settings-label">Search Engine</label>
+        <select id="setting-search-engine" class="settings-select">
+          <option value="google">Google</option>
+          <option value="duckduckgo">DuckDuckGo</option>
+          <option value="bing">Bing</option>
+        </select>
+      </div>
+      <div class="settings-group">
+        <label class="settings-label">
+          <input type="checkbox" id="setting-adblock" class="settings-checkbox">
+          Ad Blocker
+        </label>
+      </div>
+      <div class="settings-group">
+        <label class="settings-label">
+          <input type="checkbox" id="setting-restore-session" class="settings-checkbox">
+          Restore previous session on startup
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context menu -->
+  <div id="context-menu">
+    <button class="menu-item" data-action="back">
+      <span>Back</span><span class="menu-shortcut">Alt+Left</span>
+    </button>
+    <button class="menu-item" data-action="forward">
+      <span>Forward</span><span class="menu-shortcut">Alt+Right</span>
+    </button>
+    <button class="menu-item" data-action="reload">
+      <span>Reload</span><span class="menu-shortcut">Ctrl+R</span>
+    </button>
+    <div class="menu-separator"></div>
+    <button class="menu-item" data-action="bookmark">
+      <span>Bookmark this page</span><span class="menu-shortcut">Ctrl+D</span>
+    </button>
+    <div class="menu-separator"></div>
+    <button class="menu-item" data-action="find">
+      <span>Find in page</span><span class="menu-shortcut">Ctrl+F</span>
+    </button>
+    <button class="menu-item" data-action="devtools">
+      <span>Developer Tools</span><span class="menu-shortcut">F12</span>
+    </button>
+  </div>
+
+  <!-- Panel overlay for click-away close -->
+  <div id="panel-overlay"></div>
 
   <script src="renderer.js"></script>
 </body>

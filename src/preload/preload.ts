@@ -9,4 +9,47 @@ contextBridge.exposeInMainWorld("browserAPI", {
 
   // Navigation
   resolveUrl: (input: string) => ipcRenderer.invoke("nav:resolveUrl", input),
+
+  // Bookmarks
+  bookmarks: {
+    getAll: () => ipcRenderer.invoke("bookmarks:getAll"),
+    add: (url: string, title: string) => ipcRenderer.invoke("bookmarks:add", url, title),
+    remove: (url: string) => ipcRenderer.invoke("bookmarks:remove", url),
+    isBookmarked: (url: string) => ipcRenderer.invoke("bookmarks:isBookmarked", url),
+  },
+
+  // History
+  history: {
+    getAll: () => ipcRenderer.invoke("history:getAll"),
+    add: (url: string, title: string) => ipcRenderer.invoke("history:add", url, title),
+    clear: () => ipcRenderer.invoke("history:clear"),
+    search: (query: string) => ipcRenderer.invoke("history:search", query),
+  },
+
+  // Settings
+  settings: {
+    get: () => ipcRenderer.invoke("settings:get"),
+    update: (partial: Record<string, unknown>) => ipcRenderer.invoke("settings:update", partial),
+  },
+
+  // Session
+  session: {
+    get: () => ipcRenderer.invoke("session:get"),
+    save: (tabs: Array<{ url: string; title: string }>) => ipcRenderer.send("session:save", tabs),
+  },
+
+  // Downloads
+  downloads: {
+    getAll: () => ipcRenderer.invoke("downloads:getAll"),
+    clear: () => ipcRenderer.invoke("downloads:clear"),
+    onStarted: (cb: (item: unknown) => void) => ipcRenderer.on("download:started", (_e, item) => cb(item)),
+    onUpdated: (cb: (item: unknown) => void) => ipcRenderer.on("download:updated", (_e, item) => cb(item)),
+    onDone: (cb: (item: unknown) => void) => ipcRenderer.on("download:done", (_e, item) => cb(item)),
+  },
+
+  // DevTools
+  devtools: {
+    toggle: () => ipcRenderer.send("devtools:toggle"),
+    onToggleWebview: (cb: () => void) => ipcRenderer.on("devtools:toggleWebview", () => cb()),
+  },
 });
